@@ -58,7 +58,7 @@ var octopus = {
         }
         else{
             console.log('Using existing students records from localStorage');
-            return model.getStudents();
+            model.getStudents();
         }
 
         //Initialize html stucture using tableView and rowView
@@ -71,7 +71,7 @@ var octopus = {
     getStudents: function(){
         return model.students;
     },
-    putStudents: function(){
+    saveStudents: function(){
         model.putStudents();
     },
     updateAttendance: function(studenti, date){
@@ -82,9 +82,12 @@ var octopus = {
 
         model.putStudents();
     },
-    countMissed: function(i, studenti){
-        var $studentRow = $('tbody .name-col:contains("' + studenti.name + '")').parent('tr'),
-            dayChecks = $studentRow.children('td').children('input');
+    getCount: function(i, studenti){
+        // Always re-count missed date for a student everytime checkbox is checked or unchecked
+        var $studentRow = $('tbody .name-col:contains("' + studenti.name + '")').siblings('.attend-col'),
+            dayChecks = $studentRow.children('input');
+
+        model.students[i].missed = 0;
 
         dayChecks.each(function(j){
             if(!$(this).prop('checked')){
@@ -95,7 +98,6 @@ var octopus = {
 
         return model.students[i].missed;
     }
-
 };
 
 //===== 3 Views =====
@@ -136,6 +138,7 @@ var rowView = {
     init: function(){
         this.$tbody_student = $('tbody .student');
         this.students = octopus.getStudents();
+        var students = this.students;
 
         this.$tbody_student.each(function(i, e){
             //Draw each row in table :
@@ -154,7 +157,7 @@ var rowView = {
                     $input.attr('checked', 'checked');
                 }
                 octopus.updateAttendance(i, this.id);
-                countView.render();
+                countView.render(i, students[i], $(this));
             })
         });
 
@@ -175,11 +178,9 @@ var rowView = {
             else {
                 $(e).append('<td id="' + j + '" class="attend-col"><input type="checkbox"></td>');
             }
-
         }
-
         //missed-col
-        $(e).append('<td class="missed-col">' + octopus.countMissed(i, studenti) + '</td>');
+        $(e).append('<td class="missed-col">' + octopus.getCount(i, studenti) + '</td>');
 
     }
 
@@ -188,10 +189,9 @@ var rowView = {
 var countView = {
     //Put the number of missed date in .missed-col
     init: function(){
-
     },
-    render: function(){
-
+    render: function(i, studenti, $student){
+        $student.siblings('.missed-col').text(octopus.getCount(i, studenti));
     }
 
 };
